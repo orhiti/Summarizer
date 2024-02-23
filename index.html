@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Extractive Summarization</title>
+  <meta name="description" content="">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+  <link rel="stylesheet" type="text/css" href="css/basscss.min.css">
+  <style>
+    * {
+	/* Apply box-sizing and default text color to all elements */
+      box-sizing: border-box;
+      color: #222;
+    }
+	/* Set the base font size for better readability */
+    html {
+      font-size: 18px;
+    }
+	/* Basic styling for the body, making it a flex container */
+    body {
+      display: flex;
+      margin: 0;
+    }
+	/* Styling for the main container (middle) */
+    .container {
+      max-width: 40rem;
+      margin-right: 340px;
+      padding: 1rem;
+      flex-grow: 1;
+	}
+	   /* Text shadow styling for the selected text */
+	.selected-text {
+	text-shadow: 0.1em 0.1em 0.15em rgba(0, 0, 0, 0.5); /* Adjust the shadow values and color as needed */
+	}
+	/* Styling for the text area */
+    #texto {
+      border: solid 1px #ccc;
+      padding: 1rem 1rem 0;
+	  min-height: 200px; /* + Set a minimum height for better user experience */
+	  overflow-y: auto;
+	  white-space: pre-wrap; /* Preserve line breaks and wrap text */
+	  outline: none; /* Remove default outline on focus */
+	  resize: vertical; /* Allow vertical resizing */
+	  margin-bottom: 1rem; /* Add space at the bottom for better styling */
+	}
+
+	/* Background color for editable content */
+    .editable {
+      background: #fafafa;
+    }
+	/* Basic button styling */
+    .btn {
+      background: #eee;
+      border-radius: 6px;
+      color: #666;
+    }
+	/* Hover effect for buttons */
+    .btn:hover {
+      background: #ddd;
+    }
+	/* Styling for links */
+    a {
+      color: #4a5966;
+    }
+	/* Primary button styling color dyal lbotonna */
+    .btn.primary {
+      background: #2e3a44;
+      color: #fff;
+    }
+	/* Hover effect for primary buttons */
+    .btn.primary:hover {
+      background: #004e92;
+    }
+	/* Background color for specific elements */
+    .bg-yellow {
+      background: #c1d4ff;
+    }
+	/* Styling for stopwords - making them transparent with text-shadow */
+    .stopword {
+      color: transparent;
+      text-shadow: 0 0 0.2rem rgba(0,0,0,0.6);
+    }
+	/* Removing transparency for stopwords on unblur */
+    .stopword.unblur {
+      color: #222;
+      text-shadow: none;
+    }
+	/* Styling for the wordlist container (Summary side) */
+    #wordlist {
+      position: fixed;
+      right: 0;
+      top: 0;
+      width: 340px;
+      border-left: solid 1px #ccc;
+      box-shadow: 0 0 2px rgba(0,0,0,0.3);
+	  font-size: 14px;
+      height: 100vh;
+      overflow-y: auto;
+    }
+	/* Highlighting styles for top sentences and summaries */
+    .top-sentence, .summary-highlight {
+      background: #ADD8E6; /* change the selected color here */
+      padding: 0 0.1em;
+    }
+    .paragraph-number { /* Margin for paragraph numbers */
+      margin-top: 1rem;
+    }
+    /* Added styles for the paragraphs container (full text data set side)*/ 
+    #paragraph-container {
+	  left: 0; /* Change from right to left */
+      width: 340px;
+      overflow-y: auto;
+      padding: 1rem;
+      border-right: 1px solid #ccc;
+      height: 100vh;
+      box-shadow: 0 0 2px rgba(0,0,0,0.3);
+      font-size: 14px;
+    }
+	/* Margin for paragraphs */
+    .paragraph {
+      margin-bottom: 1rem;
+    }
+  </style>	
+</head>
+<body>
+  <!-- Navigation -->
+  <nav>
+    <a href="#page-top" class="navbar-brand js-scroll-trigger">
+      Oussama RHITI
+    </a>
+  </nav>
+
+  <div id="paragraph-container">
+    <div id="loaded-paragraphs" class="mb3"></div>
+    <div id="paragraph-count" class="mb2"></div>
+    <div id="paragraph-number" class="paragraph-number"></div>
+  </div>
+  <div class="container px2">
+    <div class="mb2 clearfix mt2">
+      <div id="step-title" class="left bold h4" style="line-height: 2.25rem;">Step 1 of 5: Ignore Stopwords</div>
+      <div class="right">
+        <label for="file-input" class="btn">Select file</label>
+        <input type="file" id="file-input" style="display: none" accept=".json, .csv, .docx">
+        <button id="step-button" class="btn primary left" style="margin-left: 1rem;" onclick="ignoreStopwords()">Next Step</button>
+		<div class="right">
+			<input type="file" id="file-input" style="display: none" accept=".json, .csv, .docx">
+			<button id="clean-data-button" class="btn" onclick="cleanData()">X</button>
+		</div>
+      </div>
+
+    </div>
+    <div id="step-help" class="p2 bg-yellow mb2"></div>
+    <div id="texto" class="editable mb3" class="col-12 border-bottom mb2"></div>
+
+    <!-- Buttons container placed outside of the container div -->
+    <div class="buttons-container">
+	  <label for="select-text">Text:</label>
+	  <input type="number" id="select-text" class="btn" min="1" max="300" placeholder="#" onchange="handleInputParagraphChange()">
+
+		<!-- Add more options as needed -->
+	  </select>
+      <button id="prev-paragraph" class="btn" onclick="navigateParagraph(-1)">Previous Paragraph</button>
+      <button id="next-paragraph" class="btn" onclick="navigateParagraph(1)">Next Paragraph</button>
+      <button id="read-button" class="btn primary left" onclick="handleReadButtonClick()">Select</button> <!-- Rename it if you want -->
+    </div>
+  </div>
+  
+
+  <script src="js/jquery-2.1.1.min.js"></script>
+  <script src="js/husl.min.js"></script>
+  <script src="js/pluralize.js"></script>
+  <script src="js/luhn.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.0.3/mammoth.browser.min.js"></script>
+  <script src="js/FileReader.js"></script>
+
+  <script>
+	// Get the navigation bar
+	var navBar = document.querySelector('nav');
+
+	// Store the initial scroll position
+	var lastScrollTop = 0;
+
+	// Listen for the scroll event
+	window.addEventListener('scroll', function() {
+	  // Get the current scroll position
+	  var currentScroll = window.pageYOffset || document.documentElement.scrollTop;
+
+	  // If the current scroll is greater than the last scroll, add a class to hide the navigation bar
+	  if (currentScroll > lastScrollTop){
+		navBar.classList.add('hide');
+	  } else {
+		// If the current scroll is less than the last scroll, remove the class to show the navigation bar
+		navBar.classList.remove('hide');
+	  }
+
+	  // Set the last scroll position to the current scroll
+	  lastScrollTop = currentScroll <= 0 ? 0 : currentScroll;
+	}); 
+
+ 
+	function cleanData() {
+	   // Clear the loaded paragraphs
+	   paragraphs = [];
+	   
+	   // Clear the displayed text
+	   document.getElementById('texto').innerHTML = '';
+
+	   // Clear any additional elements you want to reset
+	   // For example, you might want to clear the paragraph count and number
+	   document.getElementById('loaded-paragraphs').innerHTML = '';
+	   document.getElementById('paragraph-count').innerHTML = '';
+	   document.getElementById('paragraph-number').innerHTML = '';
+
+	   // Add any other cleaning logic you need
+	}
+
+	// Add this function to handle the selection change
+<!-- Modify the handleSelectChange function to handle the input field -->
+	function handleInputParagraphChange() {
+	  const inputElement = document.getElementById('select-text');
+	  const selectedValue = parseInt(inputElement.value, 10);
+
+	  // Update the current paragraph index based on the selected value
+	  currentParagraphIndex = selectedValue - 1;
+
+	  // Display the selected paragraph
+	  handleReadButtonClick();
+
+	  // Update the buttons' disabled state
+	  document.getElementById('prev-paragraph').disabled = currentParagraphIndex === 0;
+	  document.getElementById('next-paragraph').disabled = currentParagraphIndex === paragraphs.length - 1;
+	}
+
+
+    function blurStopwords(paragraph) {
+      const words = paragraph.split(' ');
+
+      const blurredWords = words.map(word => {
+        if (stopwords.includes(word.toLowerCase())) {
+          return `<span class="stopword">${word}</span>`;
+        } else {
+          return word;
+        }
+      });
+
+      return blurredWords.join(' ');
+    }
+
+    function blurParagraphs(paragraphs) {
+      return paragraphs.map(paragraph => blurStopwords(paragraph));
+    }
+
+    function displayParagraphs() {
+      const loadedParagraphsDiv = document.getElementById('loaded-paragraphs');
+      loadedParagraphsDiv.innerHTML = '';
+
+      const blurredParagraphs = blurParagraphs(paragraphs);
+
+      blurredParagraphs.forEach((paragraph, index) => {
+        const paragraphDiv = document.createElement('div');
+        paragraphDiv.classList.add('paragraph');
+        paragraphDiv.innerHTML = `<p><span class="paragraph-number">${index + 1}.</span> ${paragraph}</p>`;
+        loadedParagraphsDiv.appendChild(paragraphDiv);
+      });
+
+      updateParagraphCount();
+    }
+
+	function handleReadButtonClick() {
+	  selectedText = paragraphs[currentParagraphIndex];
+	  const formattedText = `<div class="selected-text">${selectedText}</div>`;
+	  document.getElementById('texto').innerHTML = formattedText;
+	  updateParagraphNumber();
+	}
+
+    function navigateParagraph(direction) {
+      if (paragraphs && paragraphs.length > 0) {
+        const nextIndex = currentParagraphIndex + direction;
+
+        if (nextIndex >= 0 && nextIndex < paragraphs.length) {
+          currentParagraphIndex = nextIndex;
+          handleReadButtonClick();
+          document.getElementById('prev-paragraph').disabled = currentParagraphIndex === 0;
+          document.getElementById('next-paragraph').disabled = currentParagraphIndex === paragraphs.length - 1;
+        }
+      }
+    }
+
+    function updateParagraphCount() {
+      const paragraphCountDiv = document.getElementById('paragraph-count');
+      paragraphCountDiv.innerHTML = `<p>Total Paragraphs: ${paragraphs.length}</p>`;
+    }
+
+    function updateParagraphNumber() {
+      const paragraphNumberDiv = document.getElementById('paragraph-number');
+      paragraphNumberDiv.innerText = `Current Paragraph: ${currentParagraphIndex + 1}`;
+    }
+
+    function ignoreStopwords() {
+	  if (selectedText) {
+		const blurredText = blurStopwords(selectedText);
+		const formattedText = `<div class="selected-text">${blurredText}</div>`;
+		document.getElementById('texto').innerHTML = formattedText;
+		document.getElementById('step-title').innerText = 'Step 2 of 5: Next Step';
+	  }
+	}
+  </script>
+</body>
+</html>
