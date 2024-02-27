@@ -243,7 +243,6 @@ function getSentences($container) {
   return result;
 };
 
-// ... (other code remains unchanged)
 // Function to match sentences based on the presence of top words
 function matchSentences() {
   var sentences = getSentences($demo_text);
