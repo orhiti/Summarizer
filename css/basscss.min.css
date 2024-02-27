@@ -62,9 +62,12 @@ body {
 /* Navigation bar styles */
 
 /* Hide the navigation bar when the hide class is added, set the value to -100% to be hidden completly after scrolling down */
+
+/*
 nav.hide {
   transform: translateY(-100%);
 }
+*/
 
 nav {
   background-color: #000000; /* Dark blue background dyal la bare*/
