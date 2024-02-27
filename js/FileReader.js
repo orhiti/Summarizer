@@ -28,10 +28,57 @@ function handleFileSelect(event) {
         handleCSVFile(e.target.result);
       };
       reader.readAsText(file);
+    } else if (extension === 'xlsx' || extension === 'xls') {
+      // Handle Excel file
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        handleExcelFile(e.target.result);
+      };
+      reader.readAsArrayBuffer(file);
+    } else if (extension === 'pdf') {
+      // Handle PDF file using parsePDF function
+      parsePDF(file);
     } else {
       alert('Unsupported file format');
     }
   }
+}
+
+function parsePDF(file) {
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    const arrayBuffer = e.target.result;
+
+    pdfjsLib.getDocument(arrayBuffer).promise.then(function (pdf) {
+      let textContent = '';
+      const getPageText = pageNum => {
+        return pdf.getPage(pageNum).then(function (page) {
+          return page.getTextContent().then(function (content) {
+            content.items.forEach(function (textItem) {
+              textContent += textItem.str + ' ';
+            });
+          });
+        });
+      };
+
+      const pagePromises = [];
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        pagePromises.push(getPageText(pageNum));
+      }
+
+      Promise.all(pagePromises).then(() => {
+        // Split paragraphs on periods followed by a space
+        paragraphs = textContent.split('. ');
+        currentParagraphIndex = 0;
+        displayParagraphs();
+        updateParagraphNumber();
+      });
+    }).catch(function (error) {
+      console.error('Error parsing PDF:', error);
+      alert('Error parsing PDF file. Check the console for details.');
+    });
+  };
+  reader.readAsArrayBuffer(file);
 }
 
 function handleTextFile(content) {
@@ -57,6 +104,20 @@ function handleCSVFile(content) {
     }
   });
 }
+
+function handleExcelFile(arrayBuffer) {
+    const workbook = XLSX.read(arrayBuffer, { type: 'array', cellDates: true });
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+    
+    const excelData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+    
+    paragraphs = excelData.map(row => row.join(' '));
+    currentParagraphIndex = 0;
+    displayParagraphs();
+    updateParagraphNumber();
+}
+
 
 function parseDocx(file) {
   const reader = new FileReader();
