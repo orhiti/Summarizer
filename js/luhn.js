@@ -336,7 +336,9 @@ function setStep(title, button, help, callback) {
 setStep(
   "Choose Text",
   'Summarize',
-  "Feel free to copy your text below or upload your data file in docx, xlsx, csv or json formats. \nYou can select the text of interest using its number, and when you're ready, click on the 'Summarize' button to start. \nPlease note that currently, only text versions in PDF are supported. Support for PDFs with image content requiring OCR technology is a potential subject for future updates. \nPRest assured that I will not keep any information from your documents and stay tuned for the latest enhancements! &#128521",
+  "Feel free to copy your text below or upload your data file in docx, xlsx, csv, or json formats. You can select the text of interest using its number, and when you're ready, click on the 'Summarize' button to start."
+  "Please note that currently, only text versions in PDF are supported. Support for PDFs with image content requiring OCR technology is a potential subject for future updates." 
+  "Rest assured that I will not keep any information from your document and stay tuned for the latest enhancements! &#128521",
   function step1() {
     $step_button.removeClass('display-none');
     setEditable(true);
